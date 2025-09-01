@@ -1,0 +1,20 @@
+[target.riscv32imac-unknown-none-elf]
+runner = "probe-rs run --chip=esp32c6"
+
+[env]
+ESP_WIFI_CONFIG_COUNTRY_CODE = "US"
+DEFMT_LOG = "debug"
+IP_CIDR = ""
+WIFI_SSID = ""
+WIFI_PASSWORD = ""
+SERVER_PUBLIC_KEY_PATH = "/dev/null"
+PRIVATE_KEY_PATH = "/dev/null"
+DEVICE_ID = "test-switch"
+SERVER_ADDR = ""
+
+[build]
+
+target = "riscv32imac-unknown-none-elf"
+
+[unstable]
+build-std = ["alloc", "core"]
