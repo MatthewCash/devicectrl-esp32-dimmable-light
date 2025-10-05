@@ -61,7 +61,7 @@ checksum = "3787a07661997bfc05dd3431e379c0188573f78857080cf682e1393ab8e4d64c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -184,7 +184,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -195,7 +195,7 @@ checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
 dependencies = [
  "darling_core",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -227,7 +227,7 @@ dependencies = [
  "proc-macro-error2",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -257,7 +257,7 @@ checksum = "6178a82cf56c836a3ba61a7935cdb1c49bfaa6fa4327cd5bf554a503087de26b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -273,11 +273,10 @@ dependencies = [
 [[package]]
 name = "devicectrl-common"
 version = "0.1.0"
-source = "git+https://github.com/MatthewCash/devicectrl-common.git#0fb116ee479948756b474baea1ba4bc43d600684"
+source = "git+https://github.com/MatthewCash/devicectrl-common.git#56fcf5f454cb92c249b7e8d90c97487cc76d3cee"
 dependencies = [
  "anyhow",
  "arrayvec",
- "discretionary",
  "paste",
  "serde",
  "serde_derive",
@@ -302,10 +301,10 @@ dependencies = [
  "esp-hal",
  "esp-hal-embassy",
  "esp-wifi",
+ "esp32-ecdsa",
  "heapless",
- "nb 1.1.0",
  "p256",
- "primeorder",
+ "rand_core 0.9.3",
  "serde",
  "serde_derive",
  "serde_json",
@@ -323,17 +322,6 @@ dependencies = [
  "block-buffer",
  "const-oid",
  "crypto-common",
-]
-
-[[package]]
-name = "discretionary"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "461ecb8c52f4ff7fea550afd422198eaee06687c41760cf8d30384812bff2d3e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -433,7 +421,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -651,7 +639,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -785,7 +773,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
  "termcolor",
 ]
 
@@ -894,6 +882,18 @@ dependencies = [
  "critical-section",
  "defmt 1.0.1",
  "vcell",
+]
+
+[[package]]
+name = "esp32-ecdsa"
+version = "0.1.0"
+source = "git+https://github.com/MatthewCash/esp32-ecdsa.git#38c435878a3af7452c4296845e8feacd254015d7"
+dependencies = [
+ "esp-hal",
+ "nb 1.1.0",
+ "p256",
+ "primeorder",
+ "snafu",
 ]
 
 [[package]]
@@ -1134,7 +1134,7 @@ dependencies = [
  "indoc",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1209,7 +1209,7 @@ checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1293,7 +1293,7 @@ checksum = "a33fa6ec7f2047f572d49317cca19c87195de99c6e5b6ee492da701cfe02b053"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1333,7 +1333,7 @@ dependencies = [
  "proc-macro-error-attr2",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1399,7 +1399,7 @@ checksum = "f265be5d634272320a7de94cea15c22a3bfdd4eb42eb43edc528415f066a1f25"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1416,7 +1416,7 @@ checksum = "fc71814687c45ba4cd1e47a54e03a2dbc62ca3667098fbae9cc6b423956758fa"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1461,7 +1461,7 @@ checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1524,6 +1524,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "snafu"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e84b3f4eacbf3a1ce05eac6763b4d629d60cbc94d632e4092c54ade71f1e1a2"
+dependencies = [
+ "snafu-derive",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1c97747dbf44bb1ca44a561ece23508e99cb592e862f22222dcf42f51d1e451"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1571,7 +1592,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1579,17 +1600,6 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-
-[[package]]
-name = "syn"
-version = "1.0.109"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-ident",
-]
 
 [[package]]
 name = "syn"
@@ -1634,7 +1644,7 @@ checksum = "44d29feb33e986b6ea906bd9c3559a856983f92371b3eaa5e83782a351623de0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
@@ -1825,7 +1835,7 @@ checksum = "c5a56a616147f5947ceb673790dd618d77b30e26e677f4a896df049d73059438"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.106",
+ "syn",
 ]
 
 [[package]]
