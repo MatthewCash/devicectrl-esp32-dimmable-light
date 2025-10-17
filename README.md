@@ -14,4 +14,6 @@ export PRIVATE_KEY_PATH=/etc/ssl/private/switch_private.der
 export WIFI_SSID=wifi
 export WIFI_PASSWORD=passw0rd
 export IP_CIDR=10.0.2.10/24
+export SERVER_ADDR=10.0.2.1:8895
+export DEVICE_ID=light-controller
 ```
