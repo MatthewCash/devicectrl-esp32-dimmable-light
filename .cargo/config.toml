@@ -13,7 +13,6 @@ DEVICE_ID = "test-switch"
 SERVER_ADDR = ""
 
 [build]
-
 target = "riscv32imac-unknown-none-elf"
 
 [unstable]

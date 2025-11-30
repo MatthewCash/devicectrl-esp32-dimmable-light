@@ -17,20 +17,19 @@ use esp_backtrace as _;
 use esp_hal::{
     clock::CpuClock,
     ecc::Ecc,
-    gpio::{Level, Output, OutputConfig},
+    gpio::{DriveMode, Level, Output, OutputConfig},
+    interrupt::software::SoftwareInterruptControl,
     ledc::{
         self, LSGlobalClkSource, Ledc, LowSpeed,
-        channel::{self, Channel, ChannelIFace, config::PinConfig},
+        channel::{self, Channel, ChannelIFace},
         timer::{self, LSClockSource, TimerIFace, config::Duty},
     },
-    peripherals,
     rng::{Rng, Trng},
     sha::Sha,
     time::Rate,
     timer::timg::TimerGroup,
 };
-use esp_hal_embassy::main;
-use esp_wifi::{EspWifiController, wifi::WifiDevice};
+use esp_radio::wifi::WifiDevice;
 use esp32_ecdsa::CryptoContext;
 use heapless::Vec;
 use p256::{
@@ -38,9 +37,7 @@ use p256::{
     pkcs8::{DecodePrivateKey, DecodePublicKey},
 };
 
-use wifi::wifi_connection;
-
-use crate::light::app_task;
+use crate::{light::app_task, wifi::wifi_connection};
 
 mod light;
 mod wifi;
@@ -68,29 +65,31 @@ pub fn log_error(err: &Error) {
 pub const SERVER_PUBLIC_KEY: &[u8] = include_bytes!(env!("SERVER_PUBLIC_KEY_PATH"));
 pub const PRIVATE_KEY: &[u8] = include_bytes!(env!("PRIVATE_KEY_PATH"));
 
-#[main]
+#[esp_rtos::main]
 async fn main(spawner: Spawner) {
     let peripherals = esp_hal::init(esp_hal::Config::default().with_cpu_clock(CpuClock::_80MHz));
 
     esp_alloc::heap_allocator!(size: 72 * 1024);
 
-    let mut rng = Rng::new(peripherals.RNG);
+    let rng = Rng::new();
 
-    let timer1 = TimerGroup::new(peripherals.TIMG1);
-    esp_hal_embassy::init(timer1.timer0);
+    let timg0 = TimerGroup::new(peripherals.TIMG0);
+    let sw_int = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+    esp_rtos::start(timg0.timer0, sw_int.software_interrupt0);
 
     // enable internal antenna
     Output::new(peripherals.GPIO3, Level::Low, OutputConfig::default());
     Timer::after(Duration::from_millis(100)).await;
     Output::new(peripherals.GPIO14, Level::Low, OutputConfig::default());
 
-    let timer0 = TimerGroup::new(peripherals.TIMG0);
-    let wifi_init = &*mk_static!(
-        EspWifiController<'static>,
-        esp_wifi::init(timer0.timer0, rng).unwrap()
+    let esp_radio_ctrl = &*mk_static!(
+        esp_radio::Controller<'static>,
+        esp_radio::init().expect("Failed to initialize radio controller")
     );
 
-    let (controller, interfaces) = esp_wifi::wifi::new(wifi_init, peripherals.WIFI).unwrap();
+    let (controller, interfaces) =
+        esp_radio::wifi::new(esp_radio_ctrl, peripherals.WIFI, Default::default())
+            .expect("Failed to initialize wifi controller");
 
     let config = embassy_net::Config::ipv4_static(StaticConfigV4 {
         address: env!("IP_CIDR").parse().unwrap(),
@@ -113,7 +112,7 @@ async fn main(spawner: Spawner) {
     let crypto = CryptoContext {
         sha: Sha::new(peripherals.SHA),
         ecc: Ecc::new(peripherals.ECC),
-        trng: Trng::new(unsafe { peripherals::RNG::steal() }, peripherals.ADC1), // should be safe as we don't use RNG after this
+        trng: Trng::try_new().expect("Failed to initialize TRNG"),
         secret_key: SecretKey::from_pkcs8_der(PRIVATE_KEY).expect("Failed to decode secret key"),
         server_public_key: PublicKey::from_public_key_der(SERVER_PUBLIC_KEY)
             .expect("Failed to decode server public key"),
@@ -132,7 +131,7 @@ async fn main(spawner: Spawner) {
             clock_source: LSClockSource::APBClk,
             frequency: Rate::from_khz(24),
         })
-        .unwrap();
+        .expect("Failed to configure LEDC timer");
 
     let led_channel = mk_static!(
         Channel<'_, LowSpeed>,
@@ -143,9 +142,9 @@ async fn main(spawner: Spawner) {
         .configure(channel::config::Config {
             timer: lstimer0,
             duty_pct: 100,
-            pin_config: PinConfig::PushPull,
+            drive_mode: DriveMode::PushPull,
         })
-        .unwrap();
+        .expect("Failed to configure LEDC channel");
 
     let transport = mk_static!(TransportChannels, TransportChannels::new());
 

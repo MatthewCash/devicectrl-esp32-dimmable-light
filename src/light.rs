@@ -1,7 +1,9 @@
 use defmt::{error, info, warn};
 use devicectrl_common::{
     DeviceId, DeviceState,
-    device_types::dimmable_light::DimmableLightState,
+    device_types::{
+        NumericProperties, NumericState, dimmable_light::DimmableLightState, switch::SwitchPower,
+    },
     protocol::simple::{
         DeviceBoundSimpleMessage, ServerBoundSimpleMessage,
         esp::{TransportChannels, TransportEvent},
@@ -15,9 +17,19 @@ use esp_hal::ledc::{
 
 use crate::log_error;
 
-fn build_state(current_brightness: u8) -> DeviceState {
+const BRIGHTNESS_PROPS: NumericProperties = NumericProperties {
+    min: 0,
+    max: 100,
+    step: 1,
+};
+
+fn build_state(current_brightness: NumericState) -> DeviceState {
     DeviceState::DimmableLight(DimmableLightState {
-        power: current_brightness > 0,
+        power: if current_brightness.value > 0 {
+            SwitchPower::On
+        } else {
+            SwitchPower::Off
+        },
         brightness: current_brightness,
     })
 }
@@ -27,7 +39,8 @@ pub async fn app_task(
     led_channel: &'static mut Channel<'static, LowSpeed>,
     transport: &'static TransportChannels,
 ) {
-    let mut current_brightness = 0u8;
+    let mut current_brightness = BRIGHTNESS_PROPS.to_state(0);
+
     loop {
         match transport.incoming.receive().await {
             TransportEvent::Connected => {
@@ -58,14 +71,11 @@ pub async fn app_task(
                 }
 
                 let new_brightness = match update.update {
-                    AttributeUpdate::Power(update) => {
-                        if update.power {
-                            100
-                        } else {
-                            0
-                        }
+                    AttributeUpdate::Power(SwitchPower::On) => 1,
+                    AttributeUpdate::Power(SwitchPower::Off) => 0,
+                    AttributeUpdate::Brightness(brightness) => {
+                        brightness.apply_to(&current_brightness)
                     }
-                    AttributeUpdate::Brightness(update) => update.brightness,
 
                     _ => {
                         warn!("Requested state is not a dimmable light state!");
@@ -75,10 +85,10 @@ pub async fn app_task(
 
                 info!("Setting light brightness to [{}]", new_brightness);
 
-                if let Err(err) = led_channel.set_duty(new_brightness) {
+                if let Err(err) = led_channel.set_duty(new_brightness as u8) {
                     error!("Failed to set duty cycle: {:?}", err);
                 } else {
-                    current_brightness = new_brightness;
+                    current_brightness.value = new_brightness;
                 }
 
                 transport

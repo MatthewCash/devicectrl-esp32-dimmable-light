@@ -1,9 +1,8 @@
 use anyhow::{Result, anyhow};
 use defmt::{error, info};
 use embassy_time::{Duration, Timer};
-use esp_wifi::{
-    config::PowerSaveMode,
-    wifi::{ClientConfiguration, Configuration, WifiController, WifiEvent, WifiState},
+use esp_radio::wifi::{
+    ClientConfig, ModeConfig, PowerSaveMode, WifiController, WifiEvent, WifiStaState,
 };
 
 use crate::log_error;
@@ -22,24 +21,20 @@ pub async fn wifi_connection(mut controller: WifiController<'static>) {
 }
 
 async fn run_wifi_loop(controller: &mut WifiController<'static>) -> Result<()> {
-    if esp_wifi::wifi::wifi_state() == WifiState::StaConnected {
+    if esp_radio::wifi::sta_state() == WifiStaState::Connected {
         controller.wait_for_event(WifiEvent::StaDisconnected).await;
         Timer::after(Duration::from_millis(5000)).await
     }
 
     if !matches!(controller.is_started(), Ok(true)) {
-        let client_config = Configuration::Client(ClientConfiguration {
-            ssid: env!("WIFI_SSID")
-                .try_into()
-                .map_err(|err| anyhow!("{:?}", err))?,
-            password: env!("WIFI_PASSWORD")
-                .try_into()
-                .map_err(|err| anyhow!("{:?}", err))?,
-            ..Default::default()
-        });
+        let client_config = ModeConfig::Client(
+            ClientConfig::default()
+                .with_ssid(env!("WIFI_SSID").into())
+                .with_password(env!("WIFI_PASSWORD").into()),
+        );
 
         controller
-            .set_configuration(&client_config)
+            .set_config(&client_config)
             .map_err(|err| anyhow!("{:?}", err))?;
         controller
             .start_async()
