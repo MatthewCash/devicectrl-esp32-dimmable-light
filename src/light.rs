@@ -40,6 +40,7 @@ pub async fn app_task(
     transport: &'static TransportChannels,
 ) {
     let mut current_brightness = BRIGHTNESS_PROPS.to_state(0);
+    let mut last_brightness = 0;
 
     loop {
         match transport.incoming.receive().await {
@@ -71,7 +72,7 @@ pub async fn app_task(
                 }
 
                 let new_brightness = match update.update {
-                    AttributeUpdate::Power(SwitchPower::On) => 1,
+                    AttributeUpdate::Power(SwitchPower::On) => last_brightness,
                     AttributeUpdate::Power(SwitchPower::Off) => 0,
                     AttributeUpdate::Brightness(brightness) => {
                         brightness.apply_to(&current_brightness)
@@ -89,6 +90,9 @@ pub async fn app_task(
                     error!("Failed to set duty cycle: {:?}", err);
                 } else {
                     current_brightness.value = new_brightness;
+                    if new_brightness > 0 {
+                        last_brightness = new_brightness;
+                    }
                 }
 
                 transport
